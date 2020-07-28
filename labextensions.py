@@ -3,13 +3,17 @@
 
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
+from glob import glob
+import json
 import os
+import shutil
 import sys
 import traceback
 
 from copy import copy
 
 from jupyter_core.application import JupyterApp, base_flags, base_aliases
+from jupyter_core.paths import jupyter_path
 
 from traitlets import Bool, Instance, Unicode
 
@@ -239,6 +243,28 @@ class UninstallLabExtensionApp(BaseExtensionApp):
     def run_task(self):
         self.extra_args = self.extra_args or [os.getcwd()]
         # TODO: uninstall dynamic extension first
+
+        for name in self.extra_args:
+            for ext_dir in jupyter_path('labextensions'):
+                ext_pattern = ext_dir + '/**/package.json.orig'
+                for ext_path in [path for path in glob(ext_pattern, recursive=True)]:
+                    with open(ext_path) as fid:
+                        data = json.load(fid)
+                    if data['name'] == name:
+                        target = os.path.dirname(ext_path)
+                        self.log.info("Removing: %s" % target)
+                        if os.path.isdir(target) and not os.path.islink(target):
+                            shutil.rmtree(target)
+                        else:
+                            os.remove(target)
+                        # Remove empty parent dir if necessary
+                        if '/' in data['name']:
+                            files = os.listdir(os.path.dirname(target))
+                            if not len(files):
+                                target = os.path.dirname(target)
+                                if os.path.isdir(target) and not os.path.islink(target):
+                                    shutil.rmtree(target)
+
         options = AppOptions(
             app_dir=self.app_dir, logger=self.log,
             core_config=self.core_config)
@@ -255,6 +281,18 @@ class ListLabExtensionsApp(BaseExtensionApp):
 
     def run_task(self):
         # TODO in commands: get the dynamic list first, and do not include those in the core list
+        for ext_dir in jupyter_path('labextensions'):
+            exts = []
+            ext_pattern = ext_dir + '/**/package.json.orig'
+            for ext_path in [path for path in glob(ext_pattern, recursive=True)]:
+                with open(ext_path) as fid:
+                    data = json.load(fid)
+                exts.append(data['name'])
+            if exts:
+                print(ext_dir)
+                for ext in exts:
+                    print('    ' + ext + '@' + data['version'])
+
         list_extensions(app_options=AppOptions(
             app_dir=self.app_dir, logger=self.log, core_config=self.core_config))
 
