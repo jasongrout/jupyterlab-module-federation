@@ -65,7 +65,7 @@ def check_labextension(files, user=False, labextensions_dir=None, sys_prefix=Fal
     return all(os.path.exists(pjoin(labext, f)) for f in files)
 
 
-def install_extension(path, symlink=False, overwrite=False,
+def install_labextension(path, symlink=False, overwrite=False,
                         user=False, labextensions_dir=None,
                         destination=None, 
                         logger=None, sys_prefix=False
@@ -103,7 +103,7 @@ def install_extension(path, symlink=False, overwrite=False,
     # the actual path to which we eventually installed
     full_dest = None
 
-    labext = _get_labextension_dir(user=user, sys_prefix=sys_prefix, prefix=prefix, labextensions_dir=labextensions_dir)
+    labext = _get_labextension_dir(user=user, sys_prefix=sys_prefix, labextensions_dir=labextensions_dir)
     # make sure labextensions dir exists
     ensure_dir_exists(labext)
 
@@ -618,7 +618,7 @@ class InstalllabextensionApp(BaseExtensionApp):
         """The default config file name."""
         return 'jupyter_notebook_config'
     
-    def install_extensions(self):
+    def install_labextensions(self):
         """Perform the installation of labextension(s)"""
         if len(self.extra_args)>1:
             raise ValueError("Only one labextension allowed at a time. "
@@ -660,7 +660,7 @@ class InstalllabextensionApp(BaseExtensionApp):
             sys.exit('Please specify an labextension to install')
         else:
             try:
-                self.install_extensions()
+                self.install_labextensions()
             except ArgumentConflict as e:
                 sys.exit(str(e))
 
@@ -719,7 +719,7 @@ class UninstalllabextensionApp(BaseExtensionApp):
         """The default config file name."""
         return 'jupyter_notebook_config'
 
-    def uninstall_extension(self):
+    def uninstall_labextension(self):
         """Uninstall an labextension from a specific location"""
         kwargs = {
             'user': self.user,
@@ -736,7 +736,7 @@ class UninstalllabextensionApp(BaseExtensionApp):
                 kwargs['require'] = self.require
             uninstall_labextension(self.extra_args[0], **kwargs)
 
-    def find_uninstall_extension(self):
+    def find_uninstall_labextension(self):
         """Uninstall an labextension from an unspecified location"""
         name = self.extra_args[0]
         if self.python:
@@ -772,12 +772,12 @@ class UninstalllabextensionApp(BaseExtensionApp):
               or self.labextensions_dir):
             # The user has specified a location from which to uninstall.
             try:
-                self.uninstall_extension()
+                self.uninstall_labextension()
             except ArgumentConflict as e:
                 sys.exit(str(e))
         else:
             # Uninstall wherever it is.
-            self.find_uninstall_extension()
+            self.find_uninstall_labextension()
 
 
 class TogglelabextensionApp(BaseExtensionApp):
